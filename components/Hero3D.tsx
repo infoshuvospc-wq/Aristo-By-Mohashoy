@@ -1,8 +1,15 @@
 
 import React, { useRef, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree, ThreeElements } from '@react-three/fiber';
 import { Sphere, MeshDistortMaterial, Float, Stars, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
+
+// Add comment: Augment JSX namespace to recognize react-three-fiber intrinsic elements
+declare global {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
 
 const AnimatedShape = () => {
   const meshRef = useRef<THREE.Mesh>(null!);
@@ -64,6 +71,7 @@ const MouseParticles = () => {
   }, []);
 
   return (
+    // Fixed: Standard R3F intrinsic elements like points, bufferGeometry, bufferAttribute and pointsMaterial
     <points ref={points}>
       <bufferGeometry>
         <bufferAttribute
@@ -83,6 +91,7 @@ const Hero3D: React.FC = () => {
     <div className="absolute inset-0 z-0">
       <Canvas>
         <PerspectiveCamera makeDefault position={[0, 0, 8]} />
+        {/* Fixed: Standard R3F intrinsic elements ambientLight and pointLight */}
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1.5} />
         <pointLight position={[-10, -10, -10]} color="#8b5cf6" intensity={1} />
