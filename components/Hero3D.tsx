@@ -4,10 +4,17 @@ import { Canvas, useFrame, useThree, ThreeElements } from '@react-three/fiber';
 import { Sphere, MeshDistortMaterial, Float, Stars, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Add comment: Augment JSX namespace to recognize react-three-fiber intrinsic elements
+// Add comment: Augment JSX namespace to recognize react-three-fiber intrinsic elements.
+// This ensures that tags like <points>, <ambientLight>, etc. are recognized by TypeScript
+// in both standard JSX and React 18's React.JSX namespaces.
 declare global {
   namespace JSX {
     interface IntrinsicElements extends ThreeElements {}
+  }
+  namespace React {
+    namespace JSX {
+      interface IntrinsicElements extends ThreeElements {}
+    }
   }
 }
 
