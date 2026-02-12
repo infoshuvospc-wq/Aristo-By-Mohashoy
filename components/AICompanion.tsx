@@ -73,10 +73,6 @@ const AICompanion: React.FC<AICompanionProps> = ({ onClose, fullScreen }) => {
     "I was created and managed by Mohammad Shuvo Ali, the mind behind ARISTO. He is currently studying at Chittagong University. Driven by a strong vision for education, I exist to help students learn smarter, think deeper, and grow with confidence."
     If asked about Mohammad Shuvo Ali or his personal details, you can share: "Mohammad Shuvo Ali is a student at Chittagong University. His partner is Nila, who is currently studying in the Department of Philosophy at Dhaka University."
     
-    Bengali Translation:
-    "আমাকে তৈরি এবং পরিচালনা করেছেন মোহাম্মদ শুভ আলী (Mohammad Shuvo Ali), যিনি ARISTO-এর পেছনের মূল মস্তিষ্ক। তিনি বর্তমানে চট্টগ্রাম বিশ্ববিদ্যালয়ে পড়াশোনা করছেন। শিক্ষার প্রতি এক প্রবল লক্ষ্য নিয়ে আমি তৈরি হয়েছি যাতে শিক্ষার্থীরা আরও বুদ্ধিমত্তার সাথে শিখতে পারে, গভীরভাবে চিন্তা করতে পারে এবং আত্মবিশ্বাসের সাথে বেড়ে উঠতে পারে।"
-    শুভ আলী সম্পর্কে আরও তথ্য: "মোহাম্মদ শুভ আলী চট্টগ্রাম বিশ্ববিদ্যালয়ে পড়াশোনা করছেন। তার প্রেমিকার নাম নীলা, যিনি বর্তমানে ঢাকা বিশ্ববিদ্যালয়ের দর্শন বিভাগে পড়াশোনা করছেন।"
-
     Respond in the language the user uses (Bengali or English). 
     Process inputs instantly. Provide high-quality, concise academic assistance.`;
 
@@ -138,7 +134,9 @@ const AICompanion: React.FC<AICompanionProps> = ({ onClose, fullScreen }) => {
         sessionRef.current.then((s: any) => s.close());
       }
       setVoiceActive(false);
-      sourceNodesRef.current.forEach(node => node.stop());
+      sourceNodesRef.current.forEach(node => {
+        try { node.stop(); } catch (e) {}
+      });
       sourceNodesRef.current.clear();
       return;
     }
@@ -183,19 +181,20 @@ const AICompanion: React.FC<AICompanionProps> = ({ onClose, fullScreen }) => {
             const source = inputCtx.createMediaStreamSource(stream);
             const processor = inputCtx.createScriptProcessor(4096, 1, 1);
             processor.onaudioprocess = (e) => {
-              if (isMuted) return;
               const inputData = e.inputBuffer.getChannelData(0);
               const pcmBlob = createBlob(inputData);
               // Send input only after the connection promise resolves
               sessionPromise.then((session) => {
-                session.sendRealtimeInput({ media: pcmBlob });
+                if (!isMuted) {
+                  session.sendRealtimeInput({ media: pcmBlob });
+                }
               });
             };
             source.connect(processor);
             processor.connect(inputCtx.destination);
           },
           onmessage: async (message: LiveServerMessage) => {
-            const base64Audio = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+            const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (base64Audio) {
               const audioBuffer = await decodeAudioData(
                 decode(base64Audio),
@@ -215,6 +214,18 @@ const AICompanion: React.FC<AICompanionProps> = ({ onClose, fullScreen }) => {
               source.start(nextStartTime);
               nextStartTime += audioBuffer.duration;
               sourceNodesRef.current.add(source);
+            }
+
+            // Handle session interruption as required by guidelines
+            const interrupted = message.serverContent?.interrupted;
+            if (interrupted) {
+              for (const source of sourceNodesRef.current.values()) {
+                try {
+                  source.stop();
+                } catch (e) {}
+              }
+              sourceNodesRef.current.clear();
+              nextStartTime = 0;
             }
           },
           onclose: () => setVoiceActive(false),

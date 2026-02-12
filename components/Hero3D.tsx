@@ -4,19 +4,9 @@ import { Canvas, useFrame, useThree, ThreeElements } from '@react-three/fiber';
 import { Sphere, MeshDistortMaterial, Float, Stars, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Add comment: Augment JSX namespace to recognize react-three-fiber intrinsic elements.
-// This ensures that tags like <points>, <ambientLight>, etc. are recognized by TypeScript
-// in both standard JSX and React 18's React.JSX namespaces.
-declare global {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-  namespace React {
-    namespace JSX {
-      interface IntrinsicElements extends ThreeElements {}
-    }
-  }
-}
+// Fix: Removed manual JSX namespace augmentation. It was shadowing standard HTML elements (like div, span, nav) 
+// and causing Property 'div' does not exist errors in all files because it redefined IntrinsicElements 
+// to only include 3D elements. Standard HTML elements are now correctly recognized by TypeScript.
 
 const AnimatedShape = () => {
   const meshRef = useRef<THREE.Mesh>(null!);
@@ -78,7 +68,7 @@ const MouseParticles = () => {
   }, []);
 
   return (
-    // Fixed: Standard R3F intrinsic elements like points, bufferGeometry, bufferAttribute and pointsMaterial
+    // Standard R3F intrinsic elements like points, bufferGeometry, bufferAttribute and pointsMaterial
     <points ref={points}>
       <bufferGeometry>
         <bufferAttribute
@@ -98,7 +88,7 @@ const Hero3D: React.FC = () => {
     <div className="absolute inset-0 z-0">
       <Canvas>
         <PerspectiveCamera makeDefault position={[0, 0, 8]} />
-        {/* Fixed: Standard R3F intrinsic elements ambientLight and pointLight */}
+        {/* Fix: Ambient and point lights are standard R3F components */}
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1.5} />
         <pointLight position={[-10, -10, -10]} color="#8b5cf6" intensity={1} />
